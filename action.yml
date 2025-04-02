@@ -105,6 +105,8 @@ runs:
       with:
         name: ${{ env.ARTIFACT_NAME }}
         re-sign: ${{ inputs.re-sign }}
+        github-token: ${{ inputs.github-token }}
+        pr-number: ${{ github.event.pull_request.number }}
 
     - name: Install Java
       if: ${{ !steps.find-artifact.outputs.artifact-url }}
