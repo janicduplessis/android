@@ -135,6 +135,7 @@ runs:
       if: ${{ !steps.find-artifact.outputs.artifact-url }}
       run: |
         JSON_OUTPUT=$(npx rnef config -p android)
+        echo "$JSON_OUTPUT" | jq -r '.project'
         ANDROID_SOURCE_DIR=$(echo "$JSON_OUTPUT" | jq -r '.project.android.sourceDir')
         APP_NAME=$(echo "$JSON_OUTPUT" | jq -r '.project.android.appName')
         echo "ANDROID_SOURCE_DIR=$ANDROID_SOURCE_DIR" >> $GITHUB_ENV
