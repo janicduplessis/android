@@ -272,7 +272,7 @@ runs:
 
     - name: Post Build
       if: ${{ github.event_name == 'pull_request' && inputs.comment-bot == 'true' }}
-      uses: callstackincubator/android/.github/actions/rnef-post-build@feat/remote-cache-command
+      uses: callstackincubator/android/.github/actions/rnef-post-build@v2
       with:
         title: Android ${{ inputs.variant }} APK for all devices
         artifact-url: ${{ steps.upload-artifact.outputs.artifact-url || env.ARTIFACT_URL }}

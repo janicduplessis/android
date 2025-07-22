@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Android
-        uses: callstackincubator/android@v1
+        uses: callstackincubator/android@v2
         with:
           variant: 'debug' # or else
           github-token: ${{ secrets.GITHUB_TOKEN }}
