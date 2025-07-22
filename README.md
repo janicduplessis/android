@@ -26,10 +26,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Build Android
-        uses: callstackincubator/android@v2
+        uses: callstackincubator/android@v2 # replace with latest commit hash
         with:
           variant: 'debug' # or else
           github-token: ${{ secrets.GITHUB_TOKEN }}
