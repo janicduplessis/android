@@ -1,6 +1,6 @@
-# RNEF Android GitHub Action
+# Rock Android GitHub Action
 
-This GitHub Action enables remote building of Android applications using RNEF (React Native Enterprise Framework). It supports both debug and release builds, with automatic artifact caching and code signing capabilities.
+This GitHub Action enables remote building of Android applications using Rock. It supports both debug and release builds, with automatic artifact caching and code signing capabilities.
 
 ## Features
 
@@ -58,7 +58,7 @@ jobs:
 | `keystore-store-password` | Keystore store password                  | No       | -       |
 | `keystore-key-alias`      | Keystore key alias                       | No       | -       |
 | `keystore-key-password`   | Keystore key password                    | No       | -       |
-| `rnef-build-extra-params` | Extra parameters for rnef build:android  | No       | -       |
+| `rock-build-extra-params` | Extra parameters for rock build:android  | No       | -       |
 | `comment-bot`             | Whether to comment PR with build link    | No       | `true`  |
 
 ## Outputs
@@ -71,7 +71,7 @@ jobs:
 ## Prerequisites
 
 - Ubuntu runner
-- RNEF CLI installed in your project
+- Rock CLI installed in your project
 - For release builds:
   - Valid Android keystore file
   - Proper code signing setup

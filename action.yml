@@ -1,5 +1,5 @@
 name: 'Remote Build - Android'
-description: 'Github implementation of the RNEF Remote Build for Android'
+description: 'Github implementation of the Rock Remote Build for Android'
 
 inputs:
   github-token:
@@ -21,8 +21,8 @@ inputs:
     description: 'Build variant'
     required: false
     default: 'debug'
-  rnef-build-extra-params:
-    description: 'Extra parameters to pass to "rnef build:android"'
+  rock-build-extra-params:
+    description: 'Extra parameters to pass to "rock build:android"'
     required: false
   sign:
     description: 'Whether to sign the build with release keystore'
@@ -94,14 +94,14 @@ runs:
     - name: Native Fingerprint
       id: fingerprint
       run: |
-        FINGERPRINT_OUTPUT=$(npx rnef fingerprint -p android --raw)
+        FINGERPRINT_OUTPUT=$(npx rock fingerprint -p android --raw)
         echo "FINGERPRINT=$FINGERPRINT_OUTPUT" >> $GITHUB_ENV
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     - name: Get Provider Name
       run: |
-        PROVIDER_NAME=$(npx rnef remote-cache get-provider-name)
+        PROVIDER_NAME=$(npx rock remote-cache get-provider-name)
         echo "PROVIDER_NAME=$PROVIDER_NAME" >> $GITHUB_ENV
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -109,8 +109,8 @@ runs:
     - name: Populate GitHub Token in Cache
       if: ${{ env.PROVIDER_NAME == 'GitHub' }}
       run: |
-        mkdir -p .rnef/cache
-        echo "{\"githubToken\": \"${{ inputs.github-token }}\"}" > .rnef/cache/project.json
+        mkdir -p .rock/cache
+        echo "{\"githubToken\": \"${{ inputs.github-token }}\"}" > .rock/cache/project.json
       shell: bash
     
     # We create PR-related artifacts to avoid overwriting the main artifact with new JS bundle
@@ -120,7 +120,7 @@ runs:
         ARTIFACT_TRAITS="${{ inputs.variant }},${{ github.event.pull_request.number}}"
         echo "ARTIFACT_TRAITS=$ARTIFACT_TRAITS" >> $GITHUB_ENV
 
-        OUTPUT=$(npx rnef remote-cache list -p android --traits "${ARTIFACT_TRAITS}" --json)
+        OUTPUT=$(npx rock remote-cache list -p android --traits "${ARTIFACT_TRAITS}" --json)
         if [ "$OUTPUT" ]; then
           echo "ARTIFACT_URL=$(echo "$OUTPUT" | jq -r '.url')" >> $GITHUB_ENV
           echo "ARTIFACT_ID=$(echo "$OUTPUT" | jq -r '.id')" >> $GITHUB_ENV
@@ -134,7 +134,7 @@ runs:
         ARTIFACT_TRAITS="${{ inputs.variant }}"
         echo "ARTIFACT_TRAITS=$ARTIFACT_TRAITS" >> $GITHUB_ENV
 
-        OUTPUT=$(npx rnef remote-cache list -p android --traits "${ARTIFACT_TRAITS}" --json)
+        OUTPUT=$(npx rock remote-cache list -p android --traits "${ARTIFACT_TRAITS}" --json)
         if [ "$OUTPUT" ]; then
           echo "ARTIFACT_URL=$(echo "$OUTPUT" | jq -r '.url')" >> $GITHUB_ENV
           echo "ARTIFACT_ID=$(echo "$OUTPUT" | jq -r '.id')" >> $GITHUB_ENV
@@ -148,7 +148,7 @@ runs:
         # Transform commas to hyphens
         ARTIFACT_TRAITS_HYPHENATED=$(echo "$ARTIFACT_TRAITS" | tr ',' '-')
         ARTIFACT_TRAITS_HYPHENATED_FINGERPRINT="${ARTIFACT_TRAITS_HYPHENATED}-${FINGERPRINT}"
-        echo "ARTIFACT_NAME=rnef-android-${ARTIFACT_TRAITS_HYPHENATED_FINGERPRINT}" >> $GITHUB_ENV
+        echo "ARTIFACT_NAME=rock-android-${ARTIFACT_TRAITS_HYPHENATED_FINGERPRINT}" >> $GITHUB_ENV
       shell: bash
 
     - name: Install Java
@@ -177,7 +177,7 @@ runs:
     - name: Determine Android sourceDir and appName
       if: ${{ !env.ARTIFACT_URL }}
       run: |
-        JSON_OUTPUT=$(npx rnef config -p android)
+        JSON_OUTPUT=$(npx rock config -p android)
         echo "$JSON_OUTPUT" | jq -r '.project'
         ANDROID_SOURCE_DIR=$(echo "$JSON_OUTPUT" | jq -r '.project.android.sourceDir')
         APP_NAME=$(echo "$JSON_OUTPUT" | jq -r '.project.android.appName')
@@ -195,9 +195,9 @@ runs:
     - name: Build Android
       if: ${{ !env.ARTIFACT_URL }}
       run: |
-        npx rnef build:android \
+        npx rock build:android \
           --variant "${{ inputs.variant }}" \
-          ${{ inputs.rnef-build-extra-params }}
+          ${{ inputs.rock-build-extra-params }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
@@ -212,7 +212,7 @@ runs:
     - name: Download and Unpack APK
       if: ${{ env.ARTIFACT_URL && inputs.re-sign == 'true' && github.event_name == 'pull_request' }}
       run: |
-        DOWNLOAD_OUTPUT=$(npx rnef remote-cache download --name ${{ env.ARTIFACT_NAME }} --json)
+        DOWNLOAD_OUTPUT=$(npx rock remote-cache download --name ${{ env.ARTIFACT_NAME }} --json)
         APK_PATH=$(echo "$DOWNLOAD_OUTPUT" | jq -r '.path')
         echo "ARTIFACT_PATH=$APK_PATH" >> $GITHUB_ENV
       shell: bash
@@ -220,7 +220,7 @@ runs:
     - name: Re-sign APK
       if: ${{ env.ARTIFACT_URL && inputs.re-sign == 'true' && github.event_name == 'pull_request' }}
       run: |
-        npx rnef sign:android ${{ env.ARTIFACT_PATH }} \
+        npx rock sign:android ${{ env.ARTIFACT_PATH }} \
           --build-jsbundle
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -228,7 +228,7 @@ runs:
     # Find artifact URL again before uploading, as other concurrent workflows could upload the same artifact
     - name: Find artifact URL again before uploading
       run: |
-        OUTPUT=$(npx rnef remote-cache list --name ${{ env.ARTIFACT_NAME }} --json)
+        OUTPUT=$(npx rock remote-cache list --name ${{ env.ARTIFACT_NAME }} --json)
         if [ -z "$OUTPUT" ]; then
           echo "No artifact found"
         else
@@ -250,21 +250,21 @@ runs:
     - name: Upload Artifact to Remote Cache for re-signed builds
       if: ${{ env.PROVIDER_NAME != 'GitHub' && (inputs.re-sign == 'true' && github.event_name == 'pull_request') }}
       run: |
-        OUTPUT=$(npx rnef remote-cache upload --name ${{ env.ARTIFACT_NAME }} --binary-path ${{ env.ARTIFACT_PATH }} --json --verbose)
+        OUTPUT=$(npx rock remote-cache upload --name ${{ env.ARTIFACT_NAME }} --binary-path ${{ env.ARTIFACT_PATH }} --json --verbose)
         echo "ARTIFACT_URL=$(echo "$OUTPUT" | jq -r '.url')" >> $GITHUB_ENV
       shell: bash
 
     - name: Upload Artifact to Remote Cache for regular builds
       if: ${{ env.PROVIDER_NAME != 'GitHub' && !env.ARTIFACT_URL }}
       run: |
-        OUTPUT=$(npx rnef remote-cache upload --name ${{ env.ARTIFACT_NAME }} --json --verbose)
+        OUTPUT=$(npx rock remote-cache upload --name ${{ env.ARTIFACT_NAME }} --json --verbose)
         echo "ARTIFACT_URL=$(echo "$OUTPUT" | jq -r '.url')" >> $GITHUB_ENV
       shell: bash
 
     - name: Delete Old Re-Signed Artifacts
       if: ${{ env.ARTIFACT_URL && inputs.re-sign == 'true' && github.event_name == 'pull_request' }}
       run: |
-        npx rnef remote-cache delete --name ${{ env.ARTIFACT_NAME }} --all-but-latest --json
+        npx rock remote-cache delete --name ${{ env.ARTIFACT_NAME }} --all-but-latest --json
       shell: bash
 
     - name: Clean Up Keystore and gradle properties (signed builds only)
@@ -276,7 +276,7 @@ runs:
 
     - name: Post Build
       if: ${{ github.event_name == 'pull_request' && inputs.comment-bot == 'true' }}
-      uses: callstackincubator/android/.github/actions/rnef-post-build@v2
+      uses: callstackincubator/android/.github/actions/rock-post-build@v2
       with:
         title: Android ${{ inputs.variant }} APK for all devices
         artifact-url: ${{ steps.upload-artifact.outputs.artifact-url || env.ARTIFACT_URL }}
