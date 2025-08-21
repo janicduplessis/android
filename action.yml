@@ -276,7 +276,7 @@ runs:
 
     - name: Post Build
       if: ${{ github.event_name == 'pull_request' && inputs.comment-bot == 'true' }}
-      uses: callstackincubator/android/.github/actions/rock-post-build@v2
+      uses: callstackincubator/android/.github/actions/rock-post-build@v3
       with:
         title: Android ${{ inputs.variant }} APK for all devices
         artifact-url: ${{ steps.upload-artifact.outputs.artifact-url || env.ARTIFACT_URL }}
